@@ -1,0 +1,170 @@
+import React, { useCallback, useState } from 'react';
+import { Button, Flex, Input, InputGroup, InputRightElement, Text } from '@chakra-ui/react';
+import { useDropzone } from 'react-dropzone'
+import xml2js from 'xml2js'
+import { v4 as uuidv4 } from 'uuid';
+
+import { File as FileIcon } from './../icons'
+import { IFile } from '../interfaces/IFile';
+import { IReport } from '../interfaces/IReport';
+import { IJpkReport } from '../pages';
+import validateSignature from '../services/signature';
+import parseJpkHeader from '../utils/jpkHeaderParser';
+import parseJpkTaxpayer from '../utils/jpkTaxpayerParser';
+import parseJpkKpir from '../utils/jpkPkpirParser';
+import parseJpkFa from '../utils/jpkFaParser';
+import parseJpkVat from '../utils/jpkVatParser';
+import { urlPatternValidation } from '../utils/helpers';
+import { useAppContext } from '../context/AppProvider';
+
+const Upload = () => {
+  const { setLoadedFiles, setError, setOpenedFiles } = useAppContext();
+  const [url, setUrl] = useState({
+    URL: "",
+    isTrueVal: false
+  });
+
+  const onDrop = useCallback((acceptedFiles) => {
+    const getFileFields = (file): IFile => ({
+      size: file.size,
+      path: file.path,
+      type: file.type,
+      date: new Date(),
+    });
+
+    setError(null);
+    const parser = new xml2js.Parser();
+    for (const file of acceptedFiles) {
+      const fileId = uuidv4();
+      setLoadedFiles(loadedFiles => [...loadedFiles, { id: fileId, file }]);
+      if (file.type === 'text/xml') {
+        const xmlReader = new FileReader();
+        xmlReader.readAsText(file, 'UTF-8')
+        xmlReader.onload = (readerEvent) => {
+          const xml = readerEvent.target.result
+          parser.parseString(xml, async (err, result) => {
+            if (err) {
+              setError(err)
+            } else {
+              const data = parseJPK(result);
+              if (data.signatureData.isSigned) {
+                data.signatureData = await validateSignature(file);
+              }
+              const fileData: IFile & IReport<IJpkReport> = {
+                id: fileId,
+                ...data,
+                ...getFileFields(file),
+              };
+              const itemsFromLS = JSON.parse(localStorage.getItem("lastProcessedFiles")) || [];
+              const newOpenedFiles = [...itemsFromLS, fileData].slice(0, 20);
+              localStorage.setItem("lastProcessedFiles", JSON.stringify(newOpenedFiles));
+              setOpenedFiles(newOpenedFiles);
+            }
+          })
+        }
+      } else {
+        const itemsFromLS = JSON.parse(localStorage.getItem("lastProcessedFiles")) || [];
+        const fileData: IFile & Pick<IReport<IJpkReport>, "signatureData"> = {
+          id: fileId,
+          signatureData: {
+            isSigned: false,
+          },
+          ...getFileFields(file),
+        };
+        const newOpenedFiles = [...itemsFromLS, fileData].slice(0, 20);
+        localStorage.setItem("lastProcessedFiles", JSON.stringify(newOpenedFiles));
+        setOpenedFiles(newOpenedFiles);
+      }
+    }
+  }, []);
+
+  const parseJPK = useCallback((result): IReport<IJpkReport> => {
+    try {
+      const jpk = result.JPK || result['tns:JPK']
+      if (!jpk) {
+        throw new Error('File is not valid JPK file')
+      }
+
+      const header = parseJpkHeader(jpk)
+      const taxpayer = parseJpkTaxpayer(jpk)
+      const isSigned = !!jpk['ds:Signature']
+
+      let report: IJpkReport;
+      switch (header.code) {
+        case 'JPK_PKPIR':
+          report = parseJpkKpir(jpk);
+          break;
+        case 'JPK_FA':
+          report = parseJpkFa(jpk);
+          break;
+        case 'JPK_VAT':
+          report = parseJpkVat(jpk);
+          break;
+      }
+      return {
+        ...header,
+        taxpayer,
+        report,
+        signatureData: {
+          isSigned,
+        },
+      };
+    } catch (e) {
+      setError(e.message)
+    }
+  }, []);
+
+  const changeUrl = event => {
+    const { value } = event.target;
+    const isTrueVal = !value || urlPatternValidation(value);
+
+    setUrl({
+      URL: value,
+      isTrueVal
+    });
+  };
+  
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+
+  return (
+    <Flex flexDir="column" p={10}>
+      <Flex p="20px" bg="#FFF" rounded={20}>
+        <Flex
+          flexDir="column"
+          alignItems="center"
+          {...getRootProps()}
+          p="30px 60px"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='25' ry='25' stroke='%23A3C1ECFF' stroke-width='3' stroke-dasharray='10%2c 20' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e")`,
+          }}
+          borderRadius="25px"
+          fontWeight="500"
+          color="#727473"
+          cursor="pointer"
+        >
+          <FileIcon w="50px" h="50px" />
+          <input {...getInputProps()} />
+          {isDragActive ? (
+            <Text>Upuść pliki tutaj...</Text>
+          ) : (
+            <Text mt={5} fontSize="12px">Przeciągnij i upuść pliki tutaj lub kliknij, aby wybrać</Text>
+          )}
+        </Flex>
+      </Flex>
+      <InputGroup h="30px" mt="20px" border="1px solid #cbd5e0" rounded={20}>
+        <Input h="28px" bg="#FFF" placeholder="Link do pliku" border="none" rounded={20} fontSize="12px" onChange={changeUrl} />
+        <InputRightElement w="110px" h="28px" roundedRight={20}>
+          <Button
+            h="28px"
+            roundedLeft={0}
+            roundedRight={20}
+            fontSize="12px"
+          >Importuj z URL</Button>
+        </InputRightElement>
+      </InputGroup>
+      {url.URL !== "" && !url.isTrueVal && <Text fontSize="10px" mt="5px" color="red">URL is not valid</Text>}
+    </Flex>
+  );
+};
+
+export default Upload;

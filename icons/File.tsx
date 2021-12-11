@@ -114,4 +114,4 @@ const File = createIcon({
   ),
 })
 
-export default File
+export default File;
