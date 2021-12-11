@@ -17,11 +17,13 @@ import { IReport } from '../interfaces/IReport'
 import { IJpkFaReport } from '../interfaces/IJpkFa'
 import parseJpkVat from '../utils/jpkVatParser'
 import { IJpkVatReport } from '../interfaces/IJpkVat'
+import axios from 'axios'
+import validateSignature from '../services/signature'
 
 export type IJpkReport = IJpkPkpirReport | IJpkFaReport | IJpkVatReport;
 
 export const Home = () => {
-  const [data, setData] = useState<IReport<IJpkReport>>();
+  const [loadedFiles, setLoadedFiles] = useState<IReport<IJpkReport>[]>([]);
   const [error, setError] = useState<string>();
   const [files, setFiles] = useState<any>();
   const [recentFiles, setRecentFiles] = useState<any>()
@@ -68,21 +70,19 @@ export const Home = () => {
           report = parseJpkVat(jpk);
           break;
       }
-
-      setData({
+      return {
         ...header,
         taxpayer,
         report,
         isSigned,
-      })
+      };
     } catch (e) {
       setError(e.message)
     }
   }, [])
 
-  const onDrop = useCallback((acceptedFiles) => {
+  const onDrop = useCallback(async (acceptedFiles) => {
     setFiles(acceptedFiles);
-    console.log(acceptedFiles);
 
     const parsedAcceptedFiles = acceptedFiles.reduce((acc, curr) => {
       const { size, path, lastModified, type } = curr;
@@ -92,19 +92,21 @@ export const Home = () => {
     const itemsFromLS = JSON.parse(localStorage.getItem("lastProcessedFiles")) || [];
     setRecentFiles(parsedAcceptedFiles.concat(itemsFromLS));
 
-    localStorage.setItem("lastProcessedFiles", JSON.stringify(parsedAcceptedFiles.concat(itemsFromLS)))
+    localStorage.setItem("lastProcessedFiles", JSON.stringify(parsedAcceptedFiles.concat(itemsFromLS).slice(0, 20)))
     setError(null);
-    const reader = new FileReader();
+    const xmlReader = new FileReader();
     const parser = new xml2js.Parser();
     for (const file of acceptedFiles) {
-      reader.readAsText(file, 'UTF-8')
-      reader.onload = (readerEvent) => {
+      const signatureData = await validateSignature(file);
+      xmlReader.readAsText(file, 'UTF-8')
+      xmlReader.onload = (readerEvent) => {
         const xml = readerEvent.target.result
         parser.parseString(xml, function (err, result) {
           if (err) {
             setError(err)
           } else {
-            parseJPK(result)
+            const fileData = parseJPK(result);
+            setLoadedFiles(loadedFiles => [...loadedFiles, { ...fileData, signatureData }]);
           }
         })
       }
@@ -116,61 +118,49 @@ export const Home = () => {
   return (
     <Layout>
       <VStack w="full" h="full" spacing={2} p={10} align="center" bg="#e9f3fe">
-        {!data ? (
-          <Flex flexDirection="column">
-            <Flex p="30px" bg="#FFF" rounded={20}>
-              <Flex
-                flexDir="column"
-                alignItems="center"
-                {...getRootProps()}
-                p="30px 60px"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='25' ry='25' stroke='%23A3C1ECFF' stroke-width='3' stroke-dasharray='10%2c 20' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e")`,
-                }}
-                borderRadius="25px"
-                fontWeight="500"
-                color="#727473"
-                cursor="pointer"
-              >
-                <File w="100px" h="100px" />
-                <input {...getInputProps()} />
-                {isDragActive ? (
-                  <Text>Upuść pliki tutaj...</Text>
-                ) : (
-                  <Text mt={10}>Przeciągnij i upuść pliki tutaj lub kliknij, aby wybrać</Text>
-                )}
-              </Flex>
+        <Flex flexDirection="column">
+          <Flex p="30px" bg="#FFF" rounded={20}>
+            <Flex
+              flexDir="column"
+              alignItems="center"
+              {...getRootProps()}
+              p="30px 60px"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='25' ry='25' stroke='%23A3C1ECFF' stroke-width='3' stroke-dasharray='10%2c 20' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e")`,
+              }}
+              borderRadius="25px"
+              fontWeight="500"
+              color="#727473"
+              cursor="pointer"
+            >
+              <File w="100px" h="100px" />
+              <input {...getInputProps()} />
+              {isDragActive ? (
+                <Text>Upuść pliki tutaj...</Text>
+              ) : (
+                <Text mt={10}>Przeciągnij i upuść pliki tutaj lub kliknij, aby wybrać</Text>
+              )}
             </Flex>
-            <InputGroup mt="20px" border="1px solid #cbd5e0" rounded={20}>
-              <Input bg="#FFF" placeholder="Link do pliku" border="none" rounded={20} fontSize="12px" onChange={changeUrl} />
-              <InputRightElement w="110px" roundedRight={20}>
-                <Button
-                  roundedLeft={0}
-                  roundedRight={20}
-                  fontSize="12px"
-                >Importuj z URL</Button>
-              </InputRightElement>
-            </InputGroup>
-            {url.URL !== "" && !url.isTrueVal && <Text fontSize="10px" mt="5px" color="red">URL is not valid</Text>}
-            <Text mt="30px">Ostatnio otwarte pliki</Text>
-            {recentFiles && recentFiles.map((file, i) =>
-              <Flex key={i} justifyContent="space-between">
-                <Text fontSize="12px">{file.path}</Text>
-                <Text fontSize="12px">{convertBytes(file.size)}</Text>
-              </Flex>
-            )}
           </Flex>
-        ) : (
-          <Box>
-            {
-              {
-                JPK_PKPIR: <KpirView data={data as IReport<IJpkPkpirReport>} setData={setData} />,
-                // JPK_FA: <FaView data={data as IReport<IJpkFaReport>} setData={setData} />,
-                // JPK_VAT: <VatView data={data as IReport<IJpkVatReport>} setData={setData} />,
-              }[data.code]
-            }
-          </Box>
-        )}
+          <InputGroup mt="20px" border="1px solid #cbd5e0" rounded={20}>
+            <Input bg="#FFF" placeholder="Link do pliku" border="none" rounded={20} fontSize="12px" onChange={changeUrl} />
+            <InputRightElement w="110px" roundedRight={20}>
+              <Button
+                roundedLeft={0}
+                roundedRight={20}
+                fontSize="12px"
+              >Importuj z URL</Button>
+            </InputRightElement>
+          </InputGroup>
+          {url.URL !== "" && !url.isTrueVal && <Text fontSize="10px" mt="5px" color="red">URL is not valid</Text>}
+          <Text mt="30px">Ostatnio otwarte pliki</Text>
+          {recentFiles && recentFiles.map((file, i) =>
+            <Flex key={i} justifyContent="space-between">
+              <Text fontSize="12px">{file.path}</Text>
+              <Text fontSize="12px">{convertBytes(file.size)}</Text>
+            </Flex>
+          )}
+        </Flex>
         {error && <Box color="red">{error}</Box>}
       </VStack>
     </Layout>
