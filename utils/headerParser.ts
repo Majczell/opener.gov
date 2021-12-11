@@ -28,8 +28,6 @@ const parseHeader = jpk => {
         header.currency = value;
         break;
       case 'CelZlozenia':
-        console.log('value', value);
-        
         header.type = value === '1' ? 'new' : 'correction';
         break;
     }

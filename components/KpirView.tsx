@@ -1,13 +1,11 @@
 import React from "react";
 import { VStack } from "@chakra-ui/layout";
 import { ArrowBackIcon } from "@chakra-ui/icons";
-import { HStack, Table, TableCaption, Tbody, Td, Tfoot, Th, Thead, Tr, Text } from "@chakra-ui/react";
+import { HStack, Table, Tbody, Td, Th, Thead, Tr, Text } from "@chakra-ui/react";
 
 import Header from "./Header";
 
 const KpirView = ({ data, setData }) => {
-  console.log('data', data);
-
   return (
     <VStack w='1200px'>
       <HStack w='full' spacing={6}>
@@ -44,7 +42,7 @@ const KpirView = ({ data, setData }) => {
         </Thead>
         <Tbody>
           {(data.report?.rows || []).map(row => (
-            <Tr>
+            <Tr key={row.no}>
               <Td isNumeric>{row.no}</Td>
 
               <Td>
