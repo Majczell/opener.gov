@@ -1,6 +1,7 @@
+import { IHeader } from "../interfaces/IHeader";
 import { JPK_Names } from "./config";
 
-const parseHeader = jpk => {
+const parseJpkHeader = (jpk): IHeader => {
   const jpkHeader = (jpk.Naglowek || jpk['tns:Naglowek'])[0];
   if (!jpkHeader) {
     throw new Error('Wrong JPK header');
@@ -36,4 +37,4 @@ const parseHeader = jpk => {
   return header;
 };
 
-export default parseHeader;
+export default parseJpkHeader;

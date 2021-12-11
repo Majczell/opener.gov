@@ -4,18 +4,24 @@ import { Button, Input, InputGroup, InputRightElement, VStack } from '@chakra-ui
 import { useDropzone } from 'react-dropzone'
 import xml2js from 'xml2js'
 
-import parseKpir from '../utils/kpirParser'
+import parseJpkKpir from '../utils/jpkPkpirParser'
 import KpirView from '../components/KpirView'
-import parseHeader from '../utils/headerParser'
-import parseTaxpayer from '../utils/taxpayerParser'
+import parseJpkHeader from '../utils/jpkHeaderParser'
+import parseJpkTaxpayer from '../utils/jpkTaxpayerParser'
 import { File } from './../icons'
 import Layout from '../components/Layout'
 import { convertBytes, urlPatternValidation } from '../utils/helpers'
-import parseFa from '../utils/faParser'
-import parseVat from '../utils/vatParser'
+import parseJpkFa from '../utils/jpkFaParser'
+import { IJpkPkpirReport } from '../interfaces/IJpkPkpir'
+import { IReport } from '../interfaces/IReport'
+import { IJpkFaReport } from '../interfaces/IJpkFa'
+import parseJpkVat from '../utils/jpkVatParser'
+import { IJpkVatReport } from '../interfaces/IJpkVat'
+
+export type IJpkReport = IJpkPkpirReport | IJpkFaReport | IJpkVatReport;
 
 export const Home = () => {
-  const [data, setData] = useState<any>();
+  const [data, setData] = useState<IReport<IJpkReport>>();
   const [error, setError] = useState<string>();
   const [files, setFiles] = useState<any>();
   const [recentFiles, setRecentFiles] = useState<any>()
@@ -27,7 +33,7 @@ export const Home = () => {
   useEffect(() => {
     const itemsFromLS = JSON.parse(localStorage.getItem("lastProcessedFiles")) || [];
     setRecentFiles(itemsFromLS);
-  },[]);
+  }, []);
 
   const changeUrl = event => {
     const { value } = event.target;
@@ -46,28 +52,28 @@ export const Home = () => {
         throw new Error('File is not valid JPK file')
       }
 
-      const header = parseHeader(jpk)
-      const taxpayer = parseTaxpayer(jpk)
-      const signed = !!jpk['ds:Signature']
+      const header = parseJpkHeader(jpk)
+      const taxpayer = parseJpkTaxpayer(jpk)
+      const isSigned = !!jpk['ds:Signature']
 
-      let report = {}
+      let report: IJpkReport;
       switch (header.code) {
         case 'JPK_PKPIR':
-          report = parseKpir(jpk);
+          report = parseJpkKpir(jpk);
           break;
         case 'JPK_FA':
-          report = parseFa(jpk);
+          report = parseJpkFa(jpk);
           break;
         case 'JPK_VAT':
-          report = parseVat(jpk);
+          report = parseJpkVat(jpk);
           break;
       }
 
       setData({
         ...header,
         taxpayer,
-        signed,
         report,
+        isSigned,
       })
     } catch (e) {
       setError(e.message)
@@ -76,11 +82,11 @@ export const Home = () => {
 
   const onDrop = useCallback((acceptedFiles) => {
     setFiles(acceptedFiles);
-console.log(acceptedFiles);
+    console.log(acceptedFiles);
 
-    const parsedAcceptedFiles = acceptedFiles.reduce((acc, curr)=> {
-      const {size, path, lastModified, type } = curr;
-      return [...acc, {size, path, lastModified, type}]
+    const parsedAcceptedFiles = acceptedFiles.reduce((acc, curr) => {
+      const { size, path, lastModified, type } = curr;
+      return [...acc, { size, path, lastModified, type }]
     }, [])
 
     const itemsFromLS = JSON.parse(localStorage.getItem("lastProcessedFiles")) || [];
@@ -136,31 +142,31 @@ console.log(acceptedFiles);
               </Flex>
             </Flex>
             <InputGroup mt="20px" border="1px solid #cbd5e0" rounded={20}>
-              <Input bg="#FFF" placeholder="Link do pliku" border="none" rounded={20} fontSize="12px" onChange={changeUrl}/>
+              <Input bg="#FFF" placeholder="Link do pliku" border="none" rounded={20} fontSize="12px" onChange={changeUrl} />
               <InputRightElement w="110px" roundedRight={20}>
-                <Button 
-                  roundedLeft={0} 
-                  roundedRight={20} 
+                <Button
+                  roundedLeft={0}
+                  roundedRight={20}
                   fontSize="12px"
                 >Importuj z URL</Button>
               </InputRightElement>
             </InputGroup>
-                {url.URL !== "" && !url.isTrueVal && <Text fontSize="10px" mt="5px" color="red">URL is not valid</Text>}
+            {url.URL !== "" && !url.isTrueVal && <Text fontSize="10px" mt="5px" color="red">URL is not valid</Text>}
             <Text mt="30px">Ostatnio otwarte pliki</Text>
-            {recentFiles && recentFiles.map((file, i) => 
-            <Flex key={i} justifyContent="space-between">
-              <Text fontSize="12px">{file.path}</Text>
-              <Text fontSize="12px">{convertBytes(file.size)}</Text>
-            </Flex>
+            {recentFiles && recentFiles.map((file, i) =>
+              <Flex key={i} justifyContent="space-between">
+                <Text fontSize="12px">{file.path}</Text>
+                <Text fontSize="12px">{convertBytes(file.size)}</Text>
+              </Flex>
             )}
           </Flex>
         ) : (
           <Box>
             {
               {
-                JPK_PKPIR: <KpirView data={data} setData={setData} />,
-                JPK_FA: <KpirView data={data} setData={setData} />,
-                JPK_VAT: <KpirView data={data} setData={setData} />,
+                JPK_PKPIR: <KpirView data={data as IReport<IJpkPkpirReport>} setData={setData} />,
+                // JPK_FA: <FaView data={data as IReport<IJpkFaReport>} setData={setData} />,
+                // JPK_VAT: <VatView data={data as IReport<IJpkVatReport>} setData={setData} />,
               }[data.code]
             }
           </Box>

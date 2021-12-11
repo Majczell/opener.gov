@@ -4,8 +4,10 @@ import { ArrowBackIcon } from "@chakra-ui/icons";
 import { HStack, Table, Tbody, Td, Th, Thead, Tr, Text } from "@chakra-ui/react";
 
 import Header from "./Header";
+import { IReport } from "../interfaces/IReport";
+import { IJpkPkpirReport } from "../interfaces/IJpkPkpir";
 
-const KpirView = ({ data, setData }) => {
+const KpirView = ({ data, setData }: { data: IReport<IJpkPkpirReport>, setData: (any) => void }) => {
   return (
     <VStack w='1200px'>
       <HStack w='full' spacing={6}>
@@ -42,15 +44,15 @@ const KpirView = ({ data, setData }) => {
         </Thead>
         <Tbody>
           {(data.report?.rows || []).map(row => (
-            <Tr key={row.no}>
-              <Td isNumeric>{row.no}</Td>
+            <Tr key={row.K_1}>
+              <Td isNumeric>{row.K_1}</Td>
 
               <Td>
                 <Text>
-                  {row.date}
+                  {row.K_2}
                 </Text>
                 <Text>
-                  {row.number}
+                  {row.K_3}
                 </Text>
               </Td>
               {/* <Td>{row.date}</Td> */}
@@ -58,27 +60,27 @@ const KpirView = ({ data, setData }) => {
 
               <Td>
                 <Text>
-                  {row.contractorName}
+                  {row.K_4}
                 </Text>
                 <Text>
-                  {row.contractorAddress}
+                  {row.K_5}
                 </Text>
               </Td>
               {/* <Td>{row.contractorName}</Td>
               <Td>{row.contractorAddress}</Td> */}
 
-              <Td>{row.description}</Td>
+              <Td>{row.K_6}</Td>
 
               <Td>
                 <Text>
-                  {row.goodsAndServicesIncome}
+                  {row.K_7}
                 </Text>
                 <Text>
-                  {row.otherIncome}
+                  {row.K_8}
                 </Text>
                 =
                 <Text>
-                  {row.totalIncome}
+                  {row.K_9}
                 </Text>
               </Td>
               {/* <Td isNumeric>{row.goodsAndServicesIncome}</Td>
@@ -87,20 +89,20 @@ const KpirView = ({ data, setData }) => {
 
               <Td>
                 <Text>
-                  {row.goodsCost}
+                  {row.K_10}
                 </Text>
                 <Text>
-                  {row.sideCost}
+                  {row.K_11}
                 </Text>
                 <Text>
-                  {row.salaryCost}
+                  {row.K_12}
                 </Text>
                 <Text>
-                  {row.otherCost}
+                  {row.K_13}
                 </Text>
                 =
                 <Text>
-                  {row.totalCost}
+                  {row.K_14}
                 </Text>
               </Td>
               {/* <Td isNumeric>{row.goodsCost}</Td>

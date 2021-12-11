@@ -17,3 +17,20 @@ export const convertBytes = (x) => {
 export const getValue = (object, fieldName) => {
   return (object[fieldName] || object[`tns:${fieldName}`] || [])[0];
 };
+
+/** Parses JPK formatted object to format used in the app */
+export const parseJpkObject = (object): any => {
+  const properties = Object.entries(object).reduce((acc, [name, value]) => {
+    return {
+      ...acc,
+      [name.replace('tns:', '')]: Array.isArray(value) ? value[0] : value,
+    };
+  }, {});
+  return properties;
+};
+
+/** Parses JPK formatted array to format used in the app */
+export const parseJpkArray = array => {
+  const rows = array.map(row => parseJpkObject(row));
+  return rows;
+};
