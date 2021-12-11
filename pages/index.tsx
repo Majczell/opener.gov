@@ -3,12 +3,13 @@ import { Box, Flex, Text } from '@chakra-ui/layout'
 import { Button, Input, InputGroup, InputRightElement, VStack } from '@chakra-ui/react'
 import { useDropzone } from 'react-dropzone'
 import xml2js from 'xml2js'
+import { v4 as uuidv4 } from 'uuid';
 
 import parseJpkKpir from '../utils/jpkPkpirParser'
 import KpirView from '../components/KpirView'
 import parseJpkHeader from '../utils/jpkHeaderParser'
 import parseJpkTaxpayer from '../utils/jpkTaxpayerParser'
-import { File } from './../icons'
+import { File as FileIcon } from './../icons'
 import Layout from '../components/Layout'
 import { convertBytes, urlPatternValidation } from '../utils/helpers'
 import parseJpkFa from '../utils/jpkFaParser'
@@ -19,14 +20,14 @@ import parseJpkVat from '../utils/jpkVatParser'
 import { IJpkVatReport } from '../interfaces/IJpkVat'
 import axios from 'axios'
 import validateSignature from '../services/signature'
+import { IFile } from '../interfaces/IFile'
 
 export type IJpkReport = IJpkPkpirReport | IJpkFaReport | IJpkVatReport;
 
 export const Home = () => {
-  const [loadedFiles, setLoadedFiles] = useState<IReport<IJpkReport>[]>([]);
+  const [openedFiles, setOpenedFiles] = useState<(IFile & IReport<IJpkReport>)[]>([]);
+  const [loadedFiles, setLoadedFiles] = useState<{ id: string; file: File; }[]>([]);
   const [error, setError] = useState<string>();
-  const [files, setFiles] = useState<any>();
-  const [recentFiles, setRecentFiles] = useState<any>()
   const [url, setUrl] = useState({
     URL: "",
     isTrueVal: false
@@ -34,7 +35,7 @@ export const Home = () => {
 
   useEffect(() => {
     const itemsFromLS = JSON.parse(localStorage.getItem("lastProcessedFiles")) || [];
-    setRecentFiles(itemsFromLS);
+    setOpenedFiles(itemsFromLS);
   }, []);
 
   const changeUrl = event => {
@@ -47,7 +48,7 @@ export const Home = () => {
     });
   };
 
-  const parseJPK = useCallback((result) => {
+  const parseJPK = useCallback((result): IReport<IJpkReport> => {
     try {
       const jpk = result.JPK || result['tns:JPK']
       if (!jpk) {
@@ -74,41 +75,65 @@ export const Home = () => {
         ...header,
         taxpayer,
         report,
-        isSigned,
+        signatureData: {
+          isSigned,
+        },
       };
     } catch (e) {
       setError(e.message)
     }
-  }, [])
+  }, []);
 
-  const onDrop = useCallback(async (acceptedFiles) => {
-    setFiles(acceptedFiles);
+  const onDrop = useCallback((acceptedFiles) => {
+    const getFileFields = (file): IFile => ({
+      size: file.size,
+      path: file.path,
+      type: file.type,
+      date: new Date(),
+    });
 
-    const parsedAcceptedFiles = acceptedFiles.reduce((acc, curr) => {
-      const { size, path, lastModified, type } = curr;
-      return [...acc, { size, path, lastModified, type }]
-    }, [])
-
-    const itemsFromLS = JSON.parse(localStorage.getItem("lastProcessedFiles")) || [];
-    setRecentFiles(parsedAcceptedFiles.concat(itemsFromLS));
-
-    localStorage.setItem("lastProcessedFiles", JSON.stringify(parsedAcceptedFiles.concat(itemsFromLS).slice(0, 20)))
     setError(null);
-    const xmlReader = new FileReader();
     const parser = new xml2js.Parser();
     for (const file of acceptedFiles) {
-      const signatureData = await validateSignature(file);
-      xmlReader.readAsText(file, 'UTF-8')
-      xmlReader.onload = (readerEvent) => {
-        const xml = readerEvent.target.result
-        parser.parseString(xml, function (err, result) {
-          if (err) {
-            setError(err)
-          } else {
-            const fileData = parseJPK(result);
-            setLoadedFiles(loadedFiles => [...loadedFiles, { ...fileData, signatureData }]);
-          }
-        })
+      const fileId = uuidv4();
+      setLoadedFiles(loadedFiles => [...loadedFiles, { id: fileId, file }]);
+      if (file.type === 'text/xml') {
+        const xmlReader = new FileReader();
+        xmlReader.readAsText(file, 'UTF-8')
+        xmlReader.onload = (readerEvent) => {
+          const xml = readerEvent.target.result
+          parser.parseString(xml, async (err, result) => {
+            if (err) {
+              setError(err)
+            } else {
+              const data = parseJPK(result);
+              if (data.signatureData.isSigned) {
+                data.signatureData = await validateSignature(file);
+              }
+              const fileData: IFile & IReport<IJpkReport> = {
+                id: fileId,
+                ...data,
+                ...getFileFields(file),
+              };
+              const itemsFromLS = JSON.parse(localStorage.getItem("lastProcessedFiles")) || [];
+              const newOpenedFiles = [...itemsFromLS, fileData].slice(0, 20);
+              localStorage.setItem("lastProcessedFiles", JSON.stringify(newOpenedFiles));
+              setOpenedFiles(newOpenedFiles);
+            }
+          })
+        }
+      } else {
+        const itemsFromLS = JSON.parse(localStorage.getItem("lastProcessedFiles")) || [];
+        const fileData: IFile & Pick<IReport<IJpkReport>, "signatureData"> = {
+          id: fileId,
+          signatureData: {
+            isSigned: false,
+          },
+          ...getFileFields(file),
+        };
+        const newOpenedFiles = [...itemsFromLS, fileData].slice(0, 20);
+        localStorage.setItem("lastProcessedFiles", JSON.stringify(newOpenedFiles));
+        setOpenedFiles(newOpenedFiles);
       }
     }
   }, [])
@@ -133,7 +158,7 @@ export const Home = () => {
               color="#727473"
               cursor="pointer"
             >
-              <File w="100px" h="100px" />
+              <FileIcon w="100px" h="100px" />
               <input {...getInputProps()} />
               {isDragActive ? (
                 <Text>Upuść pliki tutaj...</Text>
@@ -154,7 +179,7 @@ export const Home = () => {
           </InputGroup>
           {url.URL !== "" && !url.isTrueVal && <Text fontSize="10px" mt="5px" color="red">URL is not valid</Text>}
           <Text mt="30px">Ostatnio otwarte pliki</Text>
-          {recentFiles && recentFiles.map((file, i) =>
+          {openedFiles && openedFiles.map((file, i) =>
             <Flex key={i} justifyContent="space-between">
               <Text fontSize="12px">{file.path}</Text>
               <Text fontSize="12px">{convertBytes(file.size)}</Text>
