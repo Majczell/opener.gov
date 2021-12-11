@@ -1,7 +1,8 @@
 export interface IFile {
   id?: string;
+  fileExtension: string;
+  dataExtension: string;
+  name: string;
   size: number;
-  path: string;
-  type: string;
   date: Date;
 }

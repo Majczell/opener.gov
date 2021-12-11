@@ -9,8 +9,6 @@ import { NotSigned, Signed } from '../icons';
 const OpenedFiles = () => {
   const { openedFiles, error, selectedFiles, setSelectedFiles } = useAppContext();
 
-console.log(selectedFiles);
-
   return (
     <Flex w="800px" bg="white" p="30px" rounded={20}>
       <Flex flexDirection="column" w="full">
@@ -30,8 +28,8 @@ console.log(selectedFiles);
               }
             }}>
               <Flex w="full" justifyContent="space-between" mb="10px">
-                <Text w="35%" fontSize="12px">{file.path}</Text>
-                <Text w="15%" fontSize="12px">{file.type}</Text>
+                <Text w="35%" fontSize="12px">{file.name}</Text>
+                <Text w="15%" fontSize="12px">{file.dataExtension}</Text>
                 <Text w="10%" fontSize="12px">{file.signatureData.isSigned ? <Signed /> : <NotSigned />}</Text>
                 <Text w="20%" fontSize="12px">{new Date(file.date).toLocaleString()}</Text>
                 <Text w="10%" fontSize="12px">{convertBytes(file.size)}</Text>

@@ -3,6 +3,7 @@ import { Button, Flex, Input, InputGroup, InputRightElement, Text } from '@chakr
 import { useDropzone } from 'react-dropzone'
 import xml2js from 'xml2js'
 import { v4 as uuidv4 } from 'uuid';
+import FileType from 'file-type/browser';
 
 import { File as FileIcon } from './../icons'
 import { IFile } from '../interfaces/IFile';
@@ -24,17 +25,22 @@ const Upload = () => {
     isTrueVal: false
   });
 
-  const onDrop = useCallback((acceptedFiles) => {
-    const getFileFields = (file): IFile => ({
-      size: file.size,
-      path: file.path,
-      type: file.type,
-      date: new Date(),
-    });
+  const onDrop = useCallback(async (acceptedFiles) => {
+    const getFileFields = async (file): Promise<IFile> => {
+      const dataType = await FileType.fromBlob(file);
+      return {
+        fileExtension: file.name.split('.').slice(-1)[0],
+        dataExtension: dataType.ext,
+        size: file.size,
+        name: file.name,
+        date: new Date(),
+      };
+    };
 
     setError(null);
     const parser = new xml2js.Parser();
     for (const file of acceptedFiles) {
+      const fileFields = await getFileFields(file);
       const fileId = uuidv4();
       setLoadedFiles(loadedFiles => [...loadedFiles, { id: fileId, file }]);
       if (file.type === 'text/xml') {
@@ -53,7 +59,7 @@ const Upload = () => {
               const fileData: IFile & IReport<IJpkReport> = {
                 id: fileId,
                 ...data,
-                ...getFileFields(file),
+                ...fileFields,
               };
               const itemsFromLS = JSON.parse(localStorage.getItem("lastProcessedFiles")) || [];
               const newOpenedFiles = [...itemsFromLS, fileData].slice(0, 20);
@@ -64,12 +70,13 @@ const Upload = () => {
         }
       } else {
         const itemsFromLS = JSON.parse(localStorage.getItem("lastProcessedFiles")) || [];
+
         const fileData: IFile & Pick<IReport<IJpkReport>, "signatureData"> = {
           id: fileId,
           signatureData: {
             isSigned: false,
           },
-          ...getFileFields(file),
+          ...fileFields,
         };
         const newOpenedFiles = [...itemsFromLS, fileData].slice(0, 20);
         localStorage.setItem("lastProcessedFiles", JSON.stringify(newOpenedFiles));
