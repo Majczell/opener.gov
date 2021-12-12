@@ -3,7 +3,7 @@ import { Flex, Text, Box, Checkbox, CheckboxGroup, Button } from '@chakra-ui/rea
 
 import { convertBytes } from '../utils/helpers';
 import { useAppContext } from '../context/AppProvider';
-import { NotSigned, Signed } from '../icons';
+import { Lookup, NotSigned, Signed } from '../icons';
 import Link from 'next/link';
 
 
@@ -40,7 +40,7 @@ const OpenedFiles = () => {
           }
         </Flex>
         {openedFiles.length > 0 ? (
-          <Flex justifyContent="space-between" fontWeight="700" mb="10px">
+          <Flex justifyContent="space-between" fontWeight="700" mb="10px" pr="25px">
             <Checkbox onChange={() => setAll(!all)} />
             <Text w="35%" fontSize="12px">Nazwa</Text>
             <Text w="15%" fontSize="12px">Typ</Text>
@@ -55,7 +55,9 @@ const OpenedFiles = () => {
             const d: any = new Date(b.date);
             return d - c;
           }).map((file, i) =>
-            <Checkbox key={i} value={file.id} css={{
+          {
+            return (<Flex key={i} w="full" pr={file.report ? 0 : "16px"}>
+            <Checkbox w="full" value={file.id} css={{
               ".chakra-checkbox__control": {
                 marginTop: '-10px',
               },
@@ -71,6 +73,8 @@ const OpenedFiles = () => {
                 <Text w="10%" fontSize="12px">{convertBytes(file.size)}</Text>
               </Flex>
             </Checkbox>
+            {file.report && <Link href={`/jpk/${file.id}`}><Lookup cursor="pointer" /></Link>}
+          </Flex>)}
           )}
         </CheckboxGroup>
       </Flex>

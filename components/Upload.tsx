@@ -162,9 +162,9 @@ const Upload = () => {
           <FileIcon w="50px" h="50px" />
           <input {...getInputProps()} />
           {isDragActive ? (
-            <Text>Upuść pliki tutaj...</Text>
+            <Text w="300px" mt={5} fontSize="12px" textAlign="center">Upuść pliki tutaj...</Text>
           ) : (
-            <Text mt={5} fontSize="12px">Przeciągnij i upuść pliki tutaj lub kliknij, aby wybrać</Text>
+            <Text w="300px" mt={5} fontSize="12px">Przeciągnij i upuść pliki tutaj lub kliknij, aby wybrać</Text>
           )}
         </Flex>
       </Flex>

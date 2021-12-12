@@ -9,11 +9,11 @@ const Layout = ({children}) => {
   return (
     <Flex w="full" flexDir="column">
       <Settings isOpen={isOpen} onClose={onClose} />
-      <Flex bg="#FFF" h="60px" alignItems="center" mx="60px" justifyContent="space-between">
+      <Flex bg="#FFF" h="60px" w="full" alignItems="center" px="60px" justifyContent="space-between" position="fixed">
         <Image src='/openergov.png' width="136" height="26" alt="test" />
         <Text cursor="pointer" onClick={onOpen}>Ustawienia</Text>
       </Flex>
-      <Flex minH='calc(100vh - 60px)' overflow='auto'>
+      <Flex minH='calc(100vh - 60px)' overflow='auto' mt="60px" justifyContent="center" bg="#e9f3fe">
         {children}
       </Flex>
     </Flex>
