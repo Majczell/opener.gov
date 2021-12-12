@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Flex, Text, Box, Checkbox, CheckboxGroup, Button } from '@chakra-ui/react';
 
 import { convertBytes } from '../utils/helpers';
@@ -8,18 +8,27 @@ import Link from 'next/link';
 
 
 const OpenedFiles = () => {
-  const { openedFiles, error, setSelectedFiles, setOpenedFiles } = useAppContext();
+  const { openedFiles, selectedFiles, error, setSelectedFiles, setOpenedFiles } = useAppContext();
+  const [all, setAll] = useState(false);
+
+  useEffect(() => {
+    if (all) {
+      setSelectedFiles(openedFiles.map(({ id }) => id));
+    } else {
+      setSelectedFiles([]);
+    }
+  }, [all]);
 
   return (
     <Flex w="800px" bg="white" p="30px" rounded={20} direction='column'>
       <Flex flexDirection="column" w="full">
-        <Flex alignSelf="center" alignItems="center"  mb="20px">
+        <Flex alignSelf="center" alignItems="center" mb="20px">
           <Text fontSize="18px" fontWeight="700">Twoje pliki</Text>
-          {openedFiles.length > 0 && 
-            <Text 
-              ml="10px" 
+          {openedFiles.length > 0 &&
+            <Text
+              ml="10px"
               fontSize="10px"
-              color="red" 
+              color="red"
               cursor="pointer"
               onClick={() => {
                 setOpenedFiles([]);
@@ -30,23 +39,29 @@ const OpenedFiles = () => {
             </Text>
           }
         </Flex>
-        {openedFiles.length > 0 ? <Flex justifyContent="space-between" fontWeight="700" mb="5px" pl="20px">
-          <Text w="35%" fontSize="12px">Nazwa</Text>
-          <Text w="15%" fontSize="12px">Typ</Text>
-          <Text w="10%" fontSize="12px">Podpisany</Text>
-          <Text w="20%" fontSize="12px">Data</Text>
-          <Text w="10%" fontSize="12px">Rozmiar</Text>
-        </Flex> : <Text w="full" py="30px" textAlign="center">Brak plików do wyświetlenia</Text>}
-        <CheckboxGroup colorScheme='green' onChange={setSelectedFiles}>
-            {openedFiles && openedFiles.sort((a, b) => {
-                const c: any = new Date(a.date);
-                const d: any = new Date(b.date);
-                return d-c;
-            }).map((file, i) =>
+        {openedFiles.length > 0 ? (
+          <Flex justifyContent="space-between" fontWeight="700" mb="10px">
+            <Checkbox onChange={() => setAll(!all)} />
+            <Text w="35%" fontSize="12px">Nazwa</Text>
+            <Text w="15%" fontSize="12px">Typ</Text>
+            <Text w="10%" fontSize="12px">Podpisany</Text>
+            <Text w="20%" fontSize="12px">Data</Text>
+            <Text w="10%" fontSize="12px">Rozmiar</Text>
+          </Flex>
+        ) : <Text w="full" py="30px" textAlign="center">Brak plików do wyświetlenia</Text>}
+        <CheckboxGroup colorScheme='blue' onChange={setSelectedFiles} value={selectedFiles}>
+          {openedFiles && openedFiles.sort((a, b) => {
+            const c: any = new Date(a.date);
+            const d: any = new Date(b.date);
+            return d - c;
+          }).map((file, i) =>
             <Checkbox key={i} value={file.id} css={{
+              ".chakra-checkbox__control": {
+                marginTop: '-10px',
+              },
               ".chakra-checkbox__label": {
-                width: "100%"
-              }
+                width: "100%",
+              },
             }}>
               <Flex w="full" justifyContent="space-between" mb="10px">
                 <Text w="35%" fontSize="12px">{file.name}</Text>
