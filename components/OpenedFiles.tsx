@@ -1,16 +1,17 @@
-import React from 'react';
-import { Flex, Text, Box, Checkbox, CheckboxGroup } from '@chakra-ui/react';
+import React, { useState } from 'react';
+import { Flex, Text, Box, Checkbox, CheckboxGroup, Button } from '@chakra-ui/react';
 
 import { convertBytes } from '../utils/helpers';
 import { useAppContext } from '../context/AppProvider';
 import { NotSigned, Signed } from '../icons';
+import Link from 'next/link';
 
 
 const OpenedFiles = () => {
   const { openedFiles, error, setSelectedFiles, setOpenedFiles } = useAppContext();
 
   return (
-    <Flex w="800px" bg="white" p="30px" rounded={20}>
+    <Flex w="800px" bg="white" p="30px" rounded={20} direction='column'>
       <Flex flexDirection="column" w="full">
         <Flex alignSelf="center" alignItems="center"  mb="20px">
           <Text fontSize="18px" fontWeight="700">Twoje pliki</Text>
@@ -54,9 +55,16 @@ const OpenedFiles = () => {
                 <Text w="20%" fontSize="12px">{new Date(file.date).toLocaleString()}</Text>
                 <Text w="10%" fontSize="12px">{convertBytes(file.size)}</Text>
               </Flex>
-              </Checkbox>
-            )}
+            </Checkbox>
+          )}
         </CheckboxGroup>
+      </Flex>
+      <Flex w='full' justify='flex-end' mt={4}>
+        <Link href='/report'>
+          <Button colorScheme='cyan' color='white'>
+            Generuj raport
+          </Button>
+        </Link>
       </Flex>
       {error && <Box color="red">{error}</Box>}
     </Flex>

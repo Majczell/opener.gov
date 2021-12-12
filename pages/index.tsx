@@ -1,5 +1,5 @@
 import React from 'react'
-import { VStack } from '@chakra-ui/react'
+import { Button, Flex, VStack } from '@chakra-ui/react'
 
 import Layout from '../components/Layout'
 import { IJpkPkpirReport } from '../interfaces/IJpkPkpir'
@@ -14,7 +14,7 @@ export type IJpkReport = IJpkPkpirReport | IJpkFaReport | IJpkVatReport;
 export const Home = () => {
   return (
     <Layout>
-      <VStack w="full" h="full" spacing={2} align="center" bg="#e9f3fe">
+      <VStack w="full" spacing={2} align="center" bg="#e9f3fe">
         <Upload />
         <OpenedFiles />
       </VStack>
@@ -22,10 +22,4 @@ export const Home = () => {
   )
 };
 
-const HomeWithContext = (props) => (
-  <AppProvider {...props}>
-    <Home {...props} />
-  </AppProvider>
-);
-
-export default HomeWithContext;
+export default Home;
