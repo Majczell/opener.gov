@@ -10,8 +10,6 @@ const Header = ({ data }) => {
   if (!data) {
     return null;
   }
-  console.log(data);
-  
   return (
     <VStack w='full' align='start' spacing={0}>
       <Text fontSize='2xl'>{capitalize(JPK_Names[data.code])}</Text>

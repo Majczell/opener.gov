@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { Flex, HStack, VStack } from '@chakra-ui/react'
+import { HStack, VStack } from '@chakra-ui/react'
 import { ArrowBackIcon } from '@chakra-ui/icons'
 
 import Header from '../../components/Header'
@@ -8,6 +8,8 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import KpirView from '../../components/KpirView'
 import Layout from '../../components/Layout'
+import { IReport } from '../../interfaces/IReport'
+import { IJpkPkpirReport } from '../../interfaces/IJpkPkpir'
 
 const Jpk = () => {
   const { openedFiles } = useAppContext()
@@ -27,7 +29,7 @@ const Jpk = () => {
           </Link>
           <Header data={file} />
         </HStack>
-        <KpirView data={file} />
+        <KpirView data={file as IReport<IJpkPkpirReport>} />
       </VStack>
     </Layout>
   )

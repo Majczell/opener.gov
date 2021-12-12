@@ -1,4 +1,4 @@
-import { Badge, Box, Flex, Text } from "@chakra-ui/layout";
+import { Badge, Flex, Text } from "@chakra-ui/layout";
 import { Stack } from "@chakra-ui/react";
 import { format } from "date-fns";
 import { pl } from 'date-fns/locale'

@@ -1,10 +1,6 @@
 import { Box } from "@chakra-ui/layout";
 import React from "react";
 
-import KpirView from "../components/KpirView";
-import { IJpkPkpirReport } from "../interfaces/IJpkPkpir";
-import { IReport } from "../interfaces/IReport";
-
 const Details = () => {
   return (
 

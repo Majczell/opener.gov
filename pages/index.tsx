@@ -1,5 +1,5 @@
 import React from 'react'
-import { Button, Flex, VStack } from '@chakra-ui/react'
+import { VStack } from '@chakra-ui/react'
 
 import Layout from '../components/Layout'
 import { IJpkPkpirReport } from '../interfaces/IJpkPkpir'
@@ -7,7 +7,6 @@ import { IJpkFaReport } from '../interfaces/IJpkFa'
 import { IJpkVatReport } from '../interfaces/IJpkVat'
 import Upload from '../components/Upload'
 import OpenedFiles from '../components/OpenedFiles'
-import AppProvider from '../context/AppProvider'
 
 export type IJpkReport = IJpkPkpirReport | IJpkFaReport | IJpkVatReport;
 

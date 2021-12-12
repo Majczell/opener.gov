@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { Flex, VStack, Text, Link as ChakraLink, Stack, Button, Box } from "@chakra-ui/react";
+import { Flex, VStack, Text, Link as ChakraLink, Stack, Button } from "@chakra-ui/react";
 import Link from "next/link";
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import html2pdf from 'html2pdf.js';

@@ -1,4 +1,4 @@
-import { Box, Flex, Stack, Text } from "@chakra-ui/layout";
+import { Flex, Stack, Text } from "@chakra-ui/layout";
 import React from "react";
 
 const Signature = ({ signatureData }) => {

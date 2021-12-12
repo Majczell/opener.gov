@@ -9,8 +9,6 @@ const KpirView = ({
 }: {
   data: IReport<IJpkPkpirReport>
 }) => {
-  console.log(data);
-  
   return (
     <Table marginTop="100px !important" variant="simple" w="1200px" rounded="10px">
       <Thead>
