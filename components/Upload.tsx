@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Button, Flex, Input, InputGroup, InputRightElement, Text } from '@chakra-ui/react';
+import { Button, Flex, Input, InputGroup, InputRightElement, Text, useToast } from '@chakra-ui/react';
 import { useDropzone } from 'react-dropzone'
 import xml2js from 'xml2js'
 import { v4 as uuidv4 } from 'uuid';
@@ -19,13 +19,23 @@ import { urlPatternValidation } from '../utils/helpers';
 import { useAppContext } from '../context/AppProvider';
 
 const Upload = () => {
-  const { setLoadedFiles, setError, setOpenedFiles } = useAppContext();
+  const { setLoadedFiles, setError, setOpenedFiles, maxFilesUploaded, maxFilesOnList } = useAppContext();
   const [url, setUrl] = useState({
     URL: "",
     isTrueVal: false
   });
 
-  const onDrop = useCallback(async (acceptedFiles) => {
+  const toast = useToast()
+
+  const onDrop = useCallback(async (acceptedFiles, rejectedFiles) => {
+    if(rejectedFiles.length > 0) {
+      toast({
+        title: `Maksymalna ilość plików wynosi ${maxFilesUploaded}`,
+        status: "error",
+        isClosable: true,
+      })
+    }
+    
     const getFileFields = async (file): Promise<IFile> => {
       const dataType = await FileType.fromBlob(file);
       return {
@@ -62,7 +72,7 @@ const Upload = () => {
                 ...fileFields,
               };
               const itemsFromLS = JSON.parse(localStorage.getItem("lastProcessedFiles")) || [];
-              const newOpenedFiles = [...itemsFromLS, fileData].slice(0, 20);
+              const newOpenedFiles = [...itemsFromLS, fileData].slice(-maxFilesOnList);              
               localStorage.setItem("lastProcessedFiles", JSON.stringify(newOpenedFiles));
               setOpenedFiles(newOpenedFiles);
             }
@@ -78,12 +88,12 @@ const Upload = () => {
           },
           ...fileFields,
         };
-        const newOpenedFiles = [...itemsFromLS, fileData].slice(0, 20);
+        const newOpenedFiles = [...itemsFromLS, fileData].slice(-maxFilesOnList);     
         localStorage.setItem("lastProcessedFiles", JSON.stringify(newOpenedFiles));
         setOpenedFiles(newOpenedFiles);
       }
     }
-  }, []);
+  }, [maxFilesOnList]);
 
   const parseJPK = useCallback((result): IReport<IJpkReport> => {
     try {
@@ -131,7 +141,7 @@ const Upload = () => {
     });
   };
   
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, maxFiles: maxFilesUploaded });
 
   return (
     <Flex flexDir="column" p={10}>

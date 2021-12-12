@@ -7,8 +7,12 @@ export interface IAppContext {
   loadedFiles: { id: string; file: File }[];
   openedFiles: (IFile & IReport<IJpkReport>)[];
   selectedFiles: string[];
+  maxFilesUploaded: number;
+  maxFilesOnList: number;
   setError: (value: string) => void;
   setLoadedFiles: (value: { id: string; file: File }[]) => void;
   setOpenedFiles: (value: (IFile & IReport<IJpkReport>)[]) => void;
   setSelectedFiles: (calue: string[]) => void;
+  setMaxFilesUploaded: (value: number) => void;
+  setMaxFilesOnList: (value: number) => void;
 }

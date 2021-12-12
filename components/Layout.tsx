@@ -1,12 +1,17 @@
 import React from 'react';
-import { Flex } from '@chakra-ui/react';
+import { Flex,Text, useDisclosure } from '@chakra-ui/react';
 import Image from 'next/image'
+import Settings from './Settings';
 
 const Layout = ({children}) => {
+  const {isOpen, onOpen, onClose} = useDisclosure()
+
   return (
     <Flex w="full" h="full" flexDir="column">
-      <Flex bg="#FFF" h="60px" alignItems="center" mx="60px" >
+      <Settings isOpen={isOpen} onClose={onClose} />
+      <Flex bg="#FFF" h="60px" alignItems="center" mx="60px" justifyContent="space-between">
         <Image src='/openergov.png' width="136" height="26" alt="test" />
+        <Text cursor="pointer" onClick={onOpen}>Ustawienia</Text>
       </Flex>
       {children}
     </Flex>
