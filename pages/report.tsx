@@ -44,21 +44,21 @@ const Report = () => {
 
   return (
     <Layout>
-      <VStack w="full" spacing={2} align="center" bg="#e9f3fe" pt={10} pb={4}>
-        <Flex w='800px' justify='flex-start' mb={4}>
+      <VStack w="full" spacing={2} align="center" bg="#e9f3fe" pb={4}>
+        <Stack bg="#e9f3fe" position='fixed' w='800px' justify='space-between' p={4} align='center' direction='row'>
           <Link href="/">
             <Stack spacing={2} direction='row' cursor='pointer'>
               <ArrowBackIcon w={6} h={6} />
               <Text>Wróć</Text>
             </Stack>
           </Link>
-        </Flex>
-        <Stack ref={reportRef} direction='column' w='780px' justify='center' pt={2}>
+          <Button  colorScheme='blue' onClick={generatePdf}>
+            Generuj raport
+          </Button>
+        </Stack>
+        <Stack pt={16} ref={reportRef} direction='column' w='780px' justify='center'>
           {selectedFiles.map(fileId => <ReportElement key={fileId} fileId={fileId} />)}
         </Stack>
-        <Button colorScheme='blue' onClick={generatePdf}>
-          Generuj raport
-        </Button>
       </VStack>
     </Layout>
   )

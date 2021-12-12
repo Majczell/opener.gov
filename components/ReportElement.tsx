@@ -6,6 +6,7 @@ import React, { useMemo } from "react";
 
 import { useAppContext } from "../context/AppProvider";
 import { convertBytes } from "../utils/helpers";
+import Signature from "./Signature";
 
 const ReportElement = ({ fileId }: { fileId: string }) => {
   const { openedFiles } = useAppContext();
@@ -43,11 +44,7 @@ const ReportElement = ({ fileId }: { fileId: string }) => {
           </Badge>
         </Stack>
       </Flex>
-      {file.signatureData.isSigned && (
-        <Stack>
-          <Text>asdqwqdasdasdqwdasdqad</Text>
-        </Stack>
-      )}
+      {file.signatureData.isSigned && <Signature signatureData={file.signatureData} />}
     </Flex>
   );
 };

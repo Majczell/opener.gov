@@ -17,6 +17,7 @@ import parseJpkFa from '../utils/jpkFaParser';
 import parseJpkVat from '../utils/jpkVatParser';
 import { urlPatternValidation } from '../utils/helpers';
 import { useAppContext } from '../context/AppProvider';
+import axios from 'axios';
 
 const Upload = () => {
   const { setLoadedFiles, setError, setOpenedFiles, maxFilesUploaded, maxFilesOnList } = useAppContext();
@@ -28,19 +29,19 @@ const Upload = () => {
   const toast = useToast()
 
   const onDrop = useCallback(async (acceptedFiles, rejectedFiles) => {
-    if(rejectedFiles.length > 0) {
+    if (rejectedFiles.length > 0) {
       toast({
         title: `Maksymalna ilość plików wynosi ${maxFilesUploaded}`,
         status: "error",
         isClosable: true,
       })
     }
-    
+
     const getFileFields = async (file): Promise<IFile> => {
       const dataType = await FileType.fromBlob(file);
       return {
         fileExtension: file.name.split('.').slice(-1)[0],
-        dataExtension: dataType.ext,
+        dataExtension: dataType?.ext,
         size: file.size,
         name: file.name,
         date: new Date(),
@@ -72,7 +73,7 @@ const Upload = () => {
                 ...fileFields,
               };
               const itemsFromLS = JSON.parse(localStorage.getItem("lastProcessedFiles")) || [];
-              const newOpenedFiles = [...itemsFromLS, fileData].slice(-maxFilesOnList);              
+              const newOpenedFiles = [...itemsFromLS, fileData].slice(-maxFilesOnList);
               localStorage.setItem("lastProcessedFiles", JSON.stringify(newOpenedFiles));
               setOpenedFiles(newOpenedFiles);
             }
@@ -88,7 +89,7 @@ const Upload = () => {
           },
           ...fileFields,
         };
-        const newOpenedFiles = [...itemsFromLS, fileData].slice(-maxFilesOnList);     
+        const newOpenedFiles = [...itemsFromLS, fileData].slice(-maxFilesOnList);
         localStorage.setItem("lastProcessedFiles", JSON.stringify(newOpenedFiles));
         setOpenedFiles(newOpenedFiles);
       }
@@ -140,7 +141,18 @@ const Upload = () => {
       isTrueVal
     });
   };
-  
+
+  const getFromUrl = async () => {
+    const fileData = await axios.get('/api/getFile', { responseType: 'blob', params: { url: url.URL } });
+    const fileName = url.URL.split('/').slice(-1)[0];
+    const file: any = new File([fileData.data], fileName);
+    onDrop([file], []);
+    setUrl({
+      URL: '',
+      isTrueVal: true,
+    });
+  }
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, maxFiles: maxFilesUploaded });
 
   return (
@@ -169,13 +181,15 @@ const Upload = () => {
         </Flex>
       </Flex>
       <InputGroup h="30px" mt="20px" border="1px solid #cbd5e0" rounded={20}>
-        <Input h="28px" bg="#FFF" placeholder="Link do pliku" border="none" rounded={20} fontSize="12px" onChange={changeUrl} />
+        <Input value={url.URL} h="28px" bg="#FFF" placeholder="Link do pliku" border="none" rounded={20} fontSize="12px" onChange={changeUrl} />
         <InputRightElement w="110px" h="28px" roundedRight={20}>
           <Button
             h="28px"
             roundedLeft={0}
             roundedRight={20}
             fontSize="12px"
+            onClick={getFromUrl}
+            disabled={!url.isTrueVal}
           >Importuj z URL</Button>
         </InputRightElement>
       </InputGroup>
